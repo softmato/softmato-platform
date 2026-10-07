@@ -10,6 +10,7 @@
 @import 'lenis/dist/lenis.css';
 @import './marketing.css';
 @import './trusted-wall.css';
+@import './video-player.css';
 
 /*
  * Design tokens.

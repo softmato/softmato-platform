@@ -1,0 +1,70 @@
+/*
+ * The blog's video player (components/public/media/video-player.tsx): black
+ * and white, with one emerald line for progress. A range input cannot be
+ * drawn with utilities alone, so its track and thumb live here.
+ */
+
+.video-seek {
+  appearance: none;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--glow) var(--seek, 0%),
+    rgb(255 255 255 / 0.28) var(--seek, 0%)
+  );
+  cursor: pointer;
+}
+
+.video-seek::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgb(255 255 255 / 0.15);
+}
+
+.video-seek::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+}
+
+.video-seek::-moz-range-track {
+  background: transparent;
+}
+
+.video-seek:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 4px;
+}
+
+.video-controls {
+  transition: opacity 300ms ease-out;
+}
+
+/* While it plays, controls step aside until the pointer or focus comes back. */
+@media (hover: hover) {
+  .video-player[data-playing] .video-controls {
+    opacity: 0;
+  }
+
+  .video-player[data-playing]:hover .video-controls,
+  .video-player[data-playing]:focus-within .video-controls {
+    opacity: 1;
+  }
+}
+
+.video-player:fullscreen {
+  display: grid;
+  place-items: center;
+  border-radius: 0;
+}
+
+.video-player:fullscreen video {
+  max-width: 100vw;
+  max-height: 100vh;
+}

@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { contentKind, isContentKind, listContent } from '@/lib/cms';
 import { Breadcrumbs } from '@/components/admin/breadcrumbs';
 import { ContentTable } from '@/components/admin/content-table';
+import { NewContentButton } from '@/components/admin/new-content-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,8 +24,15 @@ export default async function ContentListPage({
         {kind.label}
       </Breadcrumbs>
 
-      <h1 className="headline mt-2 text-2xl">{kind.label}</h1>
-      <p className="mt-1 text-sm text-muted-foreground">{kind.description}</p>
+      <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="headline text-2xl">{kind.label}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {kind.description}
+          </p>
+        </div>
+        {kind.blank ? <NewContentButton kind={kind} /> : null}
+      </div>
 
       {!kind.canCreate && kind.createNote ? (
         <p className="mt-3 rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">

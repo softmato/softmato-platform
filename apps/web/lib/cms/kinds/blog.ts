@@ -16,6 +16,11 @@ export const blogKind: ContentKind = {
   singular: 'post',
   description: 'Drafts are invisible on the site until published.',
   canCreate: true,
+  /** Base-36 time keeps the slug unique and inside the slug format. */
+  blank: () => ({
+    slug: `untitled-${Date.now().toString(36)}`,
+    title: 'Untitled post',
+  }),
   /** The database refuses a published post with no date — see cms.ts. */
   publishRequires: 'publishedAt',
   fields: [
@@ -27,7 +32,7 @@ export const blogKind: ContentKind = {
       kind: 'textarea',
       hint: 'Shown on the blog index and used as the social description.',
     },
-    { name: 'body', label: 'Body', kind: 'markdown' },
+    { name: 'body', label: 'Body', kind: 'markdown', media: true },
     { name: 'coverImageUrl', label: 'Cover image', kind: 'image' },
     { name: 'tags', label: 'Tags', kind: 'tags', hint: 'Comma separated.' },
     ...SEO_FIELDS,

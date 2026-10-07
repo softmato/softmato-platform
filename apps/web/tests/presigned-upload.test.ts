@@ -24,7 +24,18 @@ import {
   cmsImageKey,
   parseCmsImageKey,
 } from '@/lib/storage/object-key';
-import { describeRejection, formatBytes } from '@/lib/uploads/describe';
+import {
+  describeMediaRejection,
+  describeRejection,
+  formatBytes,
+  maxBytesFor,
+} from '@/lib/uploads/describe';
+import {
+  detectVideo,
+  isVideoExtension,
+  isVideoMime,
+  MAX_VIDEO_BYTES,
+} from '@/lib/storage/video-validation';
 
 const UUID = '0f9c2b1a-1111-2222-3333-444455556666';
 
@@ -147,5 +158,50 @@ describe('describeRejection', () => {
       'not a JPEG',
     );
     expect(describeRejection(file('mystery', '', 10))).toContain('not a JPEG');
+  });
+});
+
+/*
+ * Blog videos take the same path under their own cap. The sign step may only
+ * pin MP4 or WebM, and confirm decides the type from the bytes in the bucket.
+ */
+describe('video uploads', () => {
+  const mp4 = new Uint8Array([
+    0, 0, 0, 0x20, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f, 0x6d,
+  ]);
+  const webm = new Uint8Array([0x1a, 0x45, 0xdf, 0xa3, 0x9f, 0x42, 0x86, 0x81]);
+  const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  const html = new TextEncoder().encode('<html><script>');
+
+  test('signs MP4 and WebM, nothing else that plays', () => {
+    expect(isVideoMime('video/mp4')).toBe(true);
+    expect(isVideoMime('video/webm')).toBe(true);
+    expect(isVideoMime('video/quicktime')).toBe(false);
+    expect(isVideoMime('text/html')).toBe(false);
+  });
+
+  test('detects the container from its bytes, and refuses the rest', () => {
+    expect(detectVideo(mp4)?.extension).toBe('mp4');
+    expect(detectVideo(webm)?.extension).toBe('webm');
+    expect(detectVideo(png)).toBeNull();
+    expect(detectVideo(html)).toBeNull();
+    expect(detectVideo(new Uint8Array())).toBeNull();
+  });
+
+  test('round-trips through the key the confirm step parses', () => {
+    for (const extension of ['mp4', 'webm']) {
+      const parsed = parseCmsImageKey(cmsImageKey('demo', extension, UUID));
+      expect(parsed).toEqual({ extension });
+      expect(isVideoExtension(parsed!.extension)).toBe(true);
+    }
+  });
+
+  test('a video gets the larger cap, an image keeps 5 MB', () => {
+    expect(maxBytesFor('video/mp4')).toBe(MAX_VIDEO_BYTES);
+    expect(maxBytesFor('image/png')).toBe(MAX_UPLOAD_BYTES);
+    expect(describeMediaRejection(file('a.mp4', 'video/mp4', 1024))).toBeNull();
+    expect(
+      describeMediaRejection(file('a.mov', 'video/quicktime', 1024)),
+    ).toMatch(/MP4 or WebM/);
   });
 });

@@ -17,6 +17,8 @@ export interface FieldSpec {
   required?: boolean;
   /** Shown under the input. Use it to say what the field is for. */
   hint?: string;
+  /** Markdown only: offer an image/video upload that inserts at the cursor. */
+  media?: boolean;
 }
 
 export interface ListColumn {
@@ -40,6 +42,11 @@ export interface ContentKind {
   canCreate: boolean;
   /** Explains a `canCreate: false` kind in the UI. */
   createNote?: string;
+  /**
+   * The row a "New" button inserts as a draft. Its slug must be unique and
+   * satisfy the slug format. Kinds without one have no button.
+   */
+  blank?: () => Record<string, unknown>;
 }
 
 export type ContentRow = Record<string, unknown> & {

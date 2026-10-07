@@ -2,6 +2,7 @@ import {
   MAX_UPLOAD_BYTES,
   type ImageMime,
 } from '@/lib/storage/image-validation';
+import { isVideoMime, MAX_VIDEO_BYTES } from '@/lib/storage/video-validation';
 
 /**
  * Browser-side mirror of the upload rules, for copy and for the file picker.
@@ -91,6 +92,34 @@ export function describeRejection(file: File): string | null {
 
   if (file.size > MAX_UPLOAD_BYTES) {
     return `That file is ${formatBytes(file.size)} — the limit is ${formatBytes(MAX_UPLOAD_BYTES)}.`;
+  }
+
+  return null;
+}
+
+/** The size cap for a declared type. Videos get their own, larger one. */
+export function maxBytesFor(mime: string): number {
+  return isVideoMime(mime) ? MAX_VIDEO_BYTES : MAX_UPLOAD_BYTES;
+}
+
+/** Picker filter for the blog body's media button: the images, plus MP4 and WebM. */
+export const MEDIA_ACCEPT_ATTRIBUTE = `${ACCEPT_ATTRIBUTE},video/mp4,video/webm`;
+
+export const MEDIA_UPLOAD_HINT = `Images up to ${formatBytes(MAX_UPLOAD_BYTES)}; MP4 or WebM video up to ${formatBytes(MAX_VIDEO_BYTES)}.`;
+
+/** `describeRejection`, widened to MP4 and WebM video for the blog body. */
+export function describeMediaRejection(file: File): string | null {
+  const mime = file.type.toLowerCase().trim();
+
+  if (!isVideoMime(mime) && !ACCEPTED.includes(mime as ImageMime)) {
+    return 'That is not a JPEG, PNG, WebP or GIF image, or an MP4 or WebM video.';
+  }
+
+  if (file.size <= 0) return 'That file is empty.';
+
+  const limit = maxBytesFor(mime);
+  if (file.size > limit) {
+    return `That file is ${formatBytes(file.size)} — the limit is ${formatBytes(limit)}.`;
   }
 
   return null;

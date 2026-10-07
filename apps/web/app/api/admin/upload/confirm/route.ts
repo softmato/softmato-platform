@@ -10,6 +10,12 @@ import {
   headCmsObject,
   readCmsObjectPrefix,
 } from '@/lib/storage/r2-object';
+import {
+  detectVideo,
+  isVideoExtension,
+  MAX_VIDEO_BYTES,
+} from '@/lib/storage/video-validation';
+import { formatBytes } from '@/lib/uploads/describe';
 
 /**
  * Step two of an admin upload: verify what actually landed, then release it.
@@ -68,6 +74,9 @@ export async function POST(request: Request) {
   }
 
   const objectKey = key as string;
+  /* The extension is the server's record of what it signed: image or video. */
+  const video = isVideoExtension(parsed.extension);
+  const limit = video ? MAX_VIDEO_BYTES : MAX_UPLOAD_BYTES;
 
   /* ── Did it arrive? ───────────────────────────────────────────────── */
   const size = await headCmsObject(objectKey);
@@ -90,10 +99,10 @@ export async function POST(request: Request) {
    * The real size, from the bucket. The sign step only ever saw a number the
    * client typed; this is the one that counts.
    */
-  if (size > MAX_UPLOAD_BYTES) {
+  if (size > limit) {
     await deleteCmsObject(objectKey);
     return NextResponse.json(
-      { ok: false, message: 'That file is larger than 5 MB.' },
+      { ok: false, message: `That file is larger than ${formatBytes(limit)}.` },
       { status: 413 },
     );
   }
@@ -107,11 +116,16 @@ export async function POST(request: Request) {
     );
   }
 
-  const detected = detectImage(prefix);
+  const detected = video ? detectVideo(prefix) : detectImage(prefix);
   if (!detected) {
     await deleteCmsObject(objectKey);
     return NextResponse.json(
-      { ok: false, message: 'That is not a JPEG, PNG, WebP or GIF image.' },
+      {
+        ok: false,
+        message: video
+          ? 'That is not an MP4 or WebM video.'
+          : 'That is not a JPEG, PNG, WebP or GIF image.',
+      },
       { status: 422 },
     );
   }

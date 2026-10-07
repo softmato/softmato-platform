@@ -81,7 +81,7 @@ export default async function BlogPostPage({
         </div>
       ) : null}
 
-      <Markdown>{post.body}</Markdown>
+      <Markdown media>{post.body}</Markdown>
 
       {post.tags.length > 0 ? (
         <ul className="mt-10 flex flex-wrap gap-2">

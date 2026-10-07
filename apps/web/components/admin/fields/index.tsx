@@ -25,7 +25,7 @@ export function Field({
     case 'image':
       return <ImageField {...props} uploadEnabled={uploadEnabled} />;
     case 'markdown':
-      return <MarkdownField {...props} />;
+      return <MarkdownField {...props} uploadEnabled={uploadEnabled} />;
     case 'textarea':
       return <TextareaField {...props} />;
     case 'tags':

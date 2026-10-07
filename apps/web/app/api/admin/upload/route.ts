@@ -13,6 +13,12 @@ import {
   presignCmsUpload,
   UPLOAD_URL_TTL_SECONDS,
 } from '@/lib/storage/r2-presign';
+import {
+  isVideoMime,
+  MAX_VIDEO_BYTES,
+  videoExtensionForMime,
+} from '@/lib/storage/video-validation';
+import { formatBytes } from '@/lib/uploads/describe';
 
 /**
  * Step one of an admin upload: hand back a URL the browser can PUT to.
@@ -60,12 +66,20 @@ export async function POST(request: Request) {
   };
 
   /* ── Type must be one we are willing to sign ──────────────────────── */
-  if (!isImageMime(contentType)) {
+  const video = isVideoMime(contentType);
+
+  if (!video && !isImageMime(contentType)) {
     return NextResponse.json(
-      { ok: false, message: 'That is not a JPEG, PNG, WebP or GIF image.' },
+      {
+        ok: false,
+        message:
+          'That is not a JPEG, PNG, WebP or GIF image, or an MP4 or WebM video.',
+      },
       { status: 422 },
     );
   }
+
+  const limit = video ? MAX_VIDEO_BYTES : MAX_UPLOAD_BYTES;
 
   /* ── Declared size, checked so nobody waits to be told no ─────────── */
   if (typeof size !== 'number' || !Number.isFinite(size) || size <= 0) {
@@ -75,9 +89,9 @@ export async function POST(request: Request) {
     );
   }
 
-  if (size > MAX_UPLOAD_BYTES) {
+  if (size > limit) {
     return NextResponse.json(
-      { ok: false, message: 'That file is larger than 5 MB.' },
+      { ok: false, message: `That file is larger than ${formatBytes(limit)}.` },
       { status: 413 },
     );
   }
@@ -85,7 +99,7 @@ export async function POST(request: Request) {
   /* ── Sign one key, for one type ───────────────────────────────────── */
   const key = cmsImageKey(
     typeof filename === 'string' && filename ? filename : 'image',
-    extensionForMime(contentType),
+    video ? videoExtensionForMime(contentType) : extensionForMime(contentType),
     randomUUID(),
   );
 

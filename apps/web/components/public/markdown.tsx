@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import { headingId } from '@/lib/cms/headings';
+import { MediaFrame } from '@/components/public/media/media-frame';
 import { Frame } from '@/components/public/services/service-art';
 
 /**
@@ -44,6 +45,7 @@ export function Markdown({
   children,
   anchors = false,
   marks,
+  media = false,
 }: {
   children: string;
   /**
@@ -56,6 +58,11 @@ export function Markdown({
    * above its heading in the services hand. A heading with no entry gets none.
    */
   marks?: Record<string, ReactNode> | undefined;
+  /**
+   * Images and videos (`![](…mp4)`) in a medium frame that opens the
+   * full-screen viewer. Off, an image is a plain full-width screenshot.
+   */
+  media?: boolean;
 }) {
   const seen = new Set<string>();
 
@@ -186,7 +193,9 @@ export function Markdown({
           // Product screenshots. Plain `<img>`: the source is any pasted URL,
           // and CmsImage's host allowlist needs dimensions a body can't give.
           img: ({ alt, src }) =>
-            typeof src === 'string' ? (
+            typeof src !== 'string' ? null : media ? (
+              <MediaFrame src={src} alt={alt ?? ''} />
+            ) : (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={src}
@@ -195,7 +204,7 @@ export function Markdown({
                 decoding="async"
                 className="mt-5 w-full rounded-lg border border-border bg-muted"
               />
-            ) : null,
+            ),
         }}
       >
         {children}

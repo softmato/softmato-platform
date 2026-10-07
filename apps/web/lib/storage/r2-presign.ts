@@ -4,6 +4,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 import type { ImageMime } from './image-validation';
 import { publicBucket, r2 } from './r2-client';
+import type { VideoMime } from './video-validation';
 
 /**
  * Presigned PUT URLs, so an upload goes browser → R2 and never through us.
@@ -22,7 +23,7 @@ import { publicBucket, r2 } from './r2-client';
  * - **`Content-Type`.** R2 stores and later *serves* this value, so it is the
  *   one header that must not be left free. It is signed, which means R2 will
  *   reject a PUT that sends anything else, and it is chosen from a
- *   four-entry allowlist server-side. That is what keeps the public bucket
+ *   six-entry allowlist (four images, two videos) server-side. That is what keeps the public bucket
  *   from ever serving a caller-supplied `text/html`.
  * - **A short life.** Two minutes is enough to start an upload and useless to
  *   anyone who finds the URL later.
@@ -42,7 +43,7 @@ export async function presignCmsUpload({
   contentType,
 }: {
   key: string;
-  contentType: ImageMime;
+  contentType: ImageMime | VideoMime;
 }): Promise<string> {
   return getSignedUrl(
     r2(),

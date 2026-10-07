@@ -1,4 +1,5 @@
 import { describedBy, FieldShell, inputClass } from './field-shell';
+import { MediaInsert } from './media-insert';
 import type { FieldProps } from './types';
 
 /**
@@ -9,7 +10,12 @@ import type { FieldProps } from './types';
  * value something we can render server-side without trusting HTML. If a
  * preview or toolbar is wanted later, it belongs here and nowhere else.
  */
-export function MarkdownField({ spec, defaultValue, error }: FieldProps) {
+export function MarkdownField({
+  spec,
+  defaultValue,
+  error,
+  uploadEnabled = false,
+}: FieldProps & { uploadEnabled?: boolean | undefined }) {
   return (
     <FieldShell
       name={spec.name}
@@ -28,6 +34,7 @@ export function MarkdownField({ spec, defaultValue, error }: FieldProps) {
         aria-describedby={describedBy(spec.name, spec.hint, error)}
         className={`${inputClass} font-mono text-xs`}
       />
+      {spec.media && uploadEnabled ? <MediaInsert target={spec.name} /> : null}
     </FieldShell>
   );
 }

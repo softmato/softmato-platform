@@ -1,7 +1,8 @@
-import { MAX_UPLOAD_BYTES } from '@/lib/storage/image-validation';
+import { formatBytes, maxBytesFor } from '@/lib/uploads/describe';
 
 /**
- * The browser half of an admin image upload.
+ * The browser half of an admin image upload — and of a blog video, which takes
+ * the same three steps under a larger cap.
  *
  * Three calls, because the file goes straight to R2 and never through our
  * server:
@@ -37,8 +38,12 @@ export async function uploadImage(file: File): Promise<UploadResult> {
    * a round trip. The server checks it again, and then the bucket's copy is
    * measured a third time — this one is a courtesy, not a control.
    */
-  if (file.size > MAX_UPLOAD_BYTES) {
-    return { ok: false, message: 'That file is larger than 5 MB.' };
+  const limit = maxBytesFor(file.type);
+  if (file.size > limit) {
+    return {
+      ok: false,
+      message: `That file is larger than ${formatBytes(limit)}.`,
+    };
   }
 
   /* ── 1. Ask for a URL ─────────────────────────────────────────────── */

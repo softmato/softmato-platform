@@ -1,6 +1,8 @@
 import { Drift } from '@/components/motion/drift';
 import { Parallax } from '@/components/motion/parallax';
+import { StatusPill } from '@/components/public/products/status-pill';
 import { DIRECT_LINE, OWN_PRODUCTS } from '@/lib/home/how-we-work';
+import { UPCOMING_PRODUCTS } from '@/lib/products/upcoming';
 
 import { WorkAvatar } from './work-avatar';
 import { WorkCareCard } from './work-care-card';
@@ -96,7 +98,7 @@ export function WorkShowcase() {
         <p className="text-[12.5px] text-muted-foreground">
           Products we build and run
         </p>
-        <ul className="mt-2.5 flex items-center justify-center gap-6 lg:justify-start">
+        <ul className="mt-2.5 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 lg:justify-start">
           {OWN_PRODUCTS.map((product) => (
             <li key={product.name} className="flex items-center gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -110,6 +112,22 @@ export function WorkShowcase() {
               <span className="text-[15px] font-semibold text-foreground">
                 {product.name}
               </span>
+            </li>
+          ))}
+          {UPCOMING_PRODUCTS.map((product) => (
+            <li key={product.slug} className="flex items-center gap-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={product.logoUrl}
+                alt=""
+                height={26}
+                width={26}
+                className="h-[26px] w-auto"
+              />
+              <span className="text-[15px] font-semibold text-foreground">
+                {product.title}
+              </span>
+              <StatusPill>{product.status}</StatusPill>
             </li>
           ))}
         </ul>

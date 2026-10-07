@@ -107,8 +107,8 @@ the source code either way.`,
     body: `The software we own and operate. We are the ones who host it, patch it,
 and answer when it breaks.
 
-Both run on the same foundations: one payment platform, one set of books, and
-the same rules about who may see what.`,
+HostelPalika and QuestionCall run on the same foundations: one payment
+platform, one set of books, and the same rules about who may see what.`,
   },
   {
     slug: 'team',

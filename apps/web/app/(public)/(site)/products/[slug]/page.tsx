@@ -14,18 +14,20 @@ import {
   ProductIcon,
   siteHost,
 } from '@/components/public/products/product-icon';
+import { UpcomingProductPage } from '@/components/public/products/upcoming-product-page';
 import { ServiceSections } from '@/components/public/services/service-sections';
+import { UPCOMING_PRODUCTS, upcomingProduct } from '@/lib/products/upcoming';
 
 export async function generateStaticParams() {
   const slugs = await publishedSlugs('products');
-  return slugs.map(({ slug }) => ({ slug }));
+  return [...slugs, ...UPCOMING_PRODUCTS].map(({ slug }) => ({ slug }));
 }
 
 export async function generateMetadata({
   params,
 }: PageProps<'/products/[slug]'>): Promise<Metadata> {
   const { slug } = await params;
-  const product = await getProductPage(slug);
+  const product = (await getProductPage(slug)) ?? upcomingProduct(slug);
 
   return product
     ? metadataFor(product, { path: `/products/${slug}` })
@@ -38,7 +40,12 @@ export default async function ProductPage({
   const { slug } = await params;
   const product = await getProductPage(slug);
 
-  if (!product) notFound();
+  // Not in the CMS: a product still in development, or nothing.
+  if (!product) {
+    const upcoming = upcomingProduct(slug);
+    if (!upcoming) notFound();
+    return <UpcomingProductPage product={upcoming} />;
+  }
 
   return (
     <article>

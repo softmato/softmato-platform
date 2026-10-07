@@ -93,9 +93,6 @@ export function PlaceSection() {
                     className="aspect-[4/5] w-full object-cover"
                   />
                 </ElasticPhoto>
-                <figcaption className="mt-4 text-center text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-                  {PLACE_PHOTO.credit}
-                </figcaption>
               </figure>
             </Parallax>
           </div>

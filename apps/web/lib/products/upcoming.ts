@@ -34,6 +34,13 @@ export const UPCOMING_PRODUCTS: UpcomingProduct[] = [
 - **Answering questions and doing research**
 - **Remembering important notes over time**
 
+## Built on Claude
+
+Spark's main conversation runs on Claude, Anthropic's AI model. Claude reads
+what you ask, decides what Spark should do, and writes the answer. Quick
+requests and background jobs use smaller, faster models, and Spark falls back
+to them if Claude can't be reached.
+
 ## Getting it
 
 Spark is in development. [Join the waitlist](/contact) to hear when it is

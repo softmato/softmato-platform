@@ -121,7 +121,8 @@ export async function SiteFooter({
         </div>
 
         <p className="mt-16 border-t border-border pt-6 text-[13px] text-muted-foreground">
-          © {new Date().getFullYear()} Softmato Technology Pvt Ltd
+          © {new Date().getFullYear()} Softmato Technology Pvt Ltd ·{' '}
+          <span className="whitespace-nowrap">D-U-N-S 557779947</span>
         </p>
       </div>
     </footer>

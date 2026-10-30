@@ -244,6 +244,48 @@ describe('cash', () => {
     expect(inv!.paidMinor).toBe(TOTAL);
   });
 
+  it('books only what the admin counted and leaves the rest owed', async () => {
+    const invoiceNo = await invoice();
+    const filed = await file(invoiceNo);
+    const counted = TOTAL / 2n;
+
+    const tooMuch = await db
+      .transaction((tx) =>
+        confirmOfflinePayment(
+          tx,
+          filed.txnNo,
+          1,
+          audit,
+          sendReceipt,
+          NOW,
+          TOTAL + 1n,
+        ),
+      )
+      .catch((error: unknown) => error);
+    expect(isPaymentError(tooMuch) && tooMuch.code).toBe('VALIDATION_FAILED');
+
+    const outcome = await db.transaction((tx) =>
+      confirmOfflinePayment(
+        tx,
+        filed.txnNo,
+        1,
+        audit,
+        sendReceipt,
+        NOW,
+        counted,
+      ),
+    );
+    expect(outcome.state).toBe('settled');
+    expect((await row(filed.txnNo)).grossAmountMinor).toBe(counted);
+
+    const [inv] = await db
+      .select()
+      .from(invoices)
+      .where(eq(invoices.invoiceNo, invoiceNo));
+    expect(inv!.status).toBe('partially_paid');
+    expect(inv!.paidMinor).toBe(counted);
+  });
+
   it('closes a rejected claim with the reason and books nothing', async () => {
     const filed = await file(await invoice());
 

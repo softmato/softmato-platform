@@ -233,7 +233,13 @@ async function pendingCash(tx: DbTx, txnNo: string): Promise<Transaction> {
   return transaction;
 }
 
-/** The second person's yes. Books it exactly as a gateway payment is booked. */
+/**
+ * The second person's yes. Books it exactly as a gateway payment is booked.
+ *
+ * `receivedMinor` is what the admin actually counted, when less than was
+ * filed: only that is booked and receipted, and the rest stays owed on the
+ * invoice (`partially_paid`), shown as the receipt's balance due.
+ */
 export async function confirmOfflinePayment(
   tx: DbTx,
   txnNo: string,
@@ -241,12 +247,35 @@ export async function confirmOfflinePayment(
   audit: AuditRecorder,
   sendReceipt: ReceiptSender,
   now = new Date(),
+  receivedMinor?: bigint,
 ): Promise<SettlementOutcome> {
-  const pending = await pendingCash(tx, txnNo);
+  const filed = await pendingCash(tx, txnNo);
+  const received = receivedMinor ?? filed.grossAmountMinor;
+
+  if (received <= 0n || received > filed.grossAmountMinor) {
+    throw new PaymentError(
+      'VALIDATION_FAILED',
+      'Confirmed cash outside what was filed',
+      { txnNo, filedMinor: filed.grossAmountMinor.toString() },
+      `Confirm between 0.01 and ${filed.grossAmountMinor} paisa — what was filed. Nothing changed.`,
+    );
+  }
+
+  const pending = {
+    ...filed,
+    grossAmountMinor: received,
+    netAmountMinor: received,
+  };
 
   const [approved] = await tx
     .update(transactions)
-    .set({ approvedBy: adminId, approvedAt: now, updatedAt: now })
+    .set({
+      approvedBy: adminId,
+      approvedAt: now,
+      updatedAt: now,
+      grossAmountMinor: received,
+      netAmountMinor: received,
+    })
     .where(eq(transactions.id, pending.id))
     .returning();
 
@@ -257,7 +286,10 @@ export async function confirmOfflinePayment(
       action: 'transaction.cash_confirmed',
       resourceType: 'transaction',
       resourceId: txnNo,
-      afterState: { amountMinor: pending.grossAmountMinor.toString() },
+      afterState: {
+        amountMinor: received.toString(),
+        filedMinor: filed.grossAmountMinor.toString(),
+      },
     },
     tx,
   );

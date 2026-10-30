@@ -59,7 +59,16 @@ async function decide(
 }
 
 export async function confirmCashAction(form: FormData): Promise<void> {
+  const received = String(form.get('received') ?? '').trim();
+
   await decide(form, async (txnNo, adminId) => {
+    if (!/^\d+(\.\d{1,2})?$/.test(received)) {
+      return 'Type the cash actually received, like 10000 or 10000.50.';
+    }
+
+    const [rupees = '0', paisa = ''] = received.split('.');
+    const receivedMinor = BigInt(rupees) * 100n + BigInt(paisa.padEnd(2, '0'));
+
     const outcome = await db.transaction((tx) =>
       confirmOfflinePayment(
         tx,
@@ -67,11 +76,13 @@ export async function confirmCashAction(form: FormData): Promise<void> {
         adminId,
         recordAudit,
         sendPaymentReceipt,
+        new Date(),
+        receivedMinor,
       ),
     );
 
     return outcome.state === 'settled'
-      ? `${txnNo} confirmed. It is booked to Cash in Hand and the receipt is on its way.`
+      ? `${txnNo} confirmed for ${received}. It is booked to Cash in Hand and the receipt is on its way; anything short stays owed on the invoice.`
       : `${txnNo} was not booked: ${'reason' in outcome ? outcome.reason : outcome.state}.`;
   });
 }

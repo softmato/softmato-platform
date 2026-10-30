@@ -134,6 +134,15 @@ function CashCard({ row }: { row: CashRow }) {
         >
           <input name="txnNo" type="hidden" value={row.txnNo} />
           <input
+            aria-label="Cash received"
+            className={`${INPUT} numeric w-28`}
+            defaultValue={formatPaisa(row.amountMinor).replaceAll(',', '')}
+            inputMode="decimal"
+            name="received"
+            placeholder="Received"
+            required
+          />
+          <input
             autoComplete="current-password"
             className={INPUT}
             name="password"

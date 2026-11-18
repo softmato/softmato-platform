@@ -1748,7 +1748,21 @@ html[data-nav='over-dark'] header {
     --av-ink: #16201b;
   }
 
+  /*
+   * The ring is a pseudo-element scaled and faded, not an animated box-shadow:
+   * transform and opacity run on the compositor, a box-shadow repaints every
+   * frame on the main thread.
+   */
   .live-dot {
+    position: relative;
+  }
+
+  .live-dot::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: color-mix(in oklab, var(--primary) 45%, transparent);
     animation: step-live 2.2s ease-out infinite;
   }
 
@@ -1843,11 +1857,13 @@ html[data-nav='over-dark'] header {
   /* A ring breathing out from a dot — the Live badge's `.live-dot`. */
   @keyframes step-live {
     0% {
-      box-shadow: 0 0 0 0 color-mix(in oklab, var(--primary) 45%, transparent);
+      transform: scale(1);
+      opacity: 1;
     }
     70%,
     100% {
-      box-shadow: 0 0 0 7px color-mix(in oklab, var(--primary) 0%, transparent);
+      transform: scale(3);
+      opacity: 0;
     }
   }
 
@@ -1892,7 +1908,7 @@ html[data-nav='over-dark'] header {
 
   @media (prefers-reduced-motion: reduce) {
     .cursor-wander,
-    .live-dot,
+    .live-dot::after,
     .request-slot,
     .portal-bar,
     .bell-ring {

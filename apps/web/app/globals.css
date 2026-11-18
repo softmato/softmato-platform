@@ -438,6 +438,14 @@
  * of it beyond a spinner. The marketing surface is the exception and runs its
  * own longer, scroll-driven motion.
  */
+/* Sections scrolled out of view stop their loops — see `OffscreenPause`. */
+[data-offscreen],
+[data-offscreen] *,
+[data-offscreen] *::before,
+[data-offscreen] *::after {
+  animation-play-state: paused !important;
+}
+
 @keyframes rise {
   from {
     opacity: 0;

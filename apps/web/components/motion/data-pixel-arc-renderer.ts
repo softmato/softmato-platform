@@ -64,6 +64,8 @@ export function createDataPixelArcRenderer(
   let width = 1;
   let height = 1;
   let time = 0;
+  /** The time of the frame on screen, which `intensityAt` reads. */
+  let drawnTime = 0;
   let lightBackground: CanvasGradient | null = null;
 
   /*
@@ -184,12 +186,14 @@ export function createDataPixelArcRenderer(
     lightBackground.addColorStop(0.58, '#f3f6f1');
     lightBackground.addColorStop(1, '#edf1ec');
   };
-  const render = () => {
+  /** `steps`: how many 60fps frames of motion to advance after drawing. */
+  const render = (steps = 1) => {
+    drawnTime = time;
     const options = getOptions();
     const isLight = resolveMode(options.mode) === 'light';
     if (!isLight) {
       drawDark(options);
-      time += 0.02 * options.speed;
+      time += 0.02 * options.speed * steps;
       return;
     }
     if (lightBackground) {
@@ -272,7 +276,7 @@ export function createDataPixelArcRenderer(
       }
     }
     context.globalAlpha = 1;
-    time += 0.02 * options.speed;
+    time += 0.02 * options.speed * steps;
   };
 
   /**
@@ -291,9 +295,8 @@ export function createDataPixelArcRenderer(
       1 - Math.abs(y - curveY) / (height * options.thickness),
     );
     if (intensity <= 0.01) return 0;
-    const lastTime = time - 0.02 * options.speed;
-    const wave1 = Math.sin(nx * 4 - lastTime * 1.5) * 0.1;
-    const wave2 = Math.cos(y * 0.01 + lastTime) * 0.1;
+    const wave1 = Math.sin(nx * 4 - drawnTime * 1.5) * 0.1;
+    const wave2 = Math.cos(y * 0.01 + drawnTime) * 0.1;
     intensity = Math.max(0, Math.min(1, intensity + wave1 + wave2));
     return intensity * Math.max(0, 1 - Math.pow(Math.abs(nx), 2.5));
   };

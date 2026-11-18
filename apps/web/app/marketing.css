@@ -1034,8 +1034,13 @@ html[data-nav='over-dark'] header {
     opacity: 0.9;
   }
 
+  /*
+   * One whole unit per step (19 steps over the 19-unit dash period): the dots
+   * travel at the same speed, but the wires repaint ~17 times a second
+   * instead of every frame.
+   */
   .believe[data-live][data-inview] .believe-flow path {
-    animation: believe-flow 1.1s linear infinite;
+    animation: believe-flow 1.1s steps(19) infinite;
   }
 
   .believe[data-live][data-inview] .believe-glow {
@@ -1788,17 +1793,25 @@ html[data-nav='over-dark'] header {
   }
 
   /* The empty slot in the client's checkout, asking to be filled. */
+  /* A still ring that fades — opacity runs on the compositor, a box-shadow repaints. */
   .request-slot {
+    position: relative;
+  }
+
+  .request-slot::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--primary) 16%, transparent);
+    opacity: 0;
+    pointer-events: none;
     animation: request-slot 2.4s ease-in-out infinite;
   }
 
   @keyframes request-slot {
-    0%,
-    100% {
-      box-shadow: 0 0 0 0 color-mix(in oklab, var(--primary) 0%, transparent);
-    }
     50% {
-      box-shadow: 0 0 0 4px color-mix(in oklab, var(--primary) 16%, transparent);
+      opacity: 1;
     }
   }
 
@@ -1909,7 +1922,7 @@ html[data-nav='over-dark'] header {
   @media (prefers-reduced-motion: reduce) {
     .cursor-wander,
     .live-dot::after,
-    .request-slot,
+    .request-slot::after,
     .portal-bar,
     .bell-ring {
       animation: none;

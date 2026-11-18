@@ -10,6 +10,8 @@ import {
   type DataPixelArcOptions,
 } from './data-pixel-arc-renderer';
 
+const FRAME_MS = 1000 / 30;
+
 /**
  * ThreeUI's `DataPixelArcCanvas` (MIT, @designcodeio/threeui — what
  * `<PredictiveArcCanvas variant="data-pixel" />` renders), kept to the source's
@@ -60,25 +62,38 @@ export function DataPixelArc({
     );
     if (!renderer) return undefined;
     let frame = 0;
+    let last = 0;
     let visible = true;
     const loop = () => !still && visible && !document.hidden;
-    const draw = () => {
-      renderer.render();
+    const draw = (steps: number) => {
+      renderer.render(steps);
       onFrameRef.current?.(renderer.intensityAt, host);
     };
     const resize = () => {
       const bounds = host.getBoundingClientRect();
       renderer.resize(bounds.width, bounds.height);
-      draw();
+      draw(0);
     };
-    const tick = () => {
-      draw();
+    /*
+     * 30fps, advanced by elapsed time so the arc keeps the source's 60fps
+     * speed (and no longer doubles it on a 120Hz screen). A slow glow reads
+     * the same at half the rate, and the hero's letter melt — an SVG filter
+     * re-rasterised per letter each drawn frame — costs half as much.
+     */
+    const tick = (now: number) => {
+      if (!last || now - last >= FRAME_MS - 2) {
+        draw(last ? Math.min(4, (now - last) / (1000 / 60)) : 1);
+        last = now;
+      }
       frame = loop() ? requestAnimationFrame(tick) : 0;
     };
     const observer = new ResizeObserver(resize);
     const intersection = new IntersectionObserver(([entry]) => {
       visible = entry?.isIntersecting ?? true;
-      if (loop() && !frame) frame = requestAnimationFrame(tick);
+      if (loop() && !frame) {
+        last = 0;
+        frame = requestAnimationFrame(tick);
+      }
       if (!visible && frame) {
         cancelAnimationFrame(frame);
         frame = 0;
@@ -89,6 +104,7 @@ export function DataPixelArc({
         cancelAnimationFrame(frame);
         frame = 0;
       } else if (loop() && !frame) {
+        last = 0;
         frame = requestAnimationFrame(tick);
       }
     };
